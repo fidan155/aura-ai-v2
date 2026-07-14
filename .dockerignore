@@ -1,0 +1,30 @@
+# Dependencies & Build-Artefakte (werden im Container frisch erzeugt)
+node_modules
+.next
+out
+
+# Python / venvs
+.venv
+venv
+backend-api/.venv
+backend-api/venv
+**/__pycache__
+*.pyc
+
+# Git & lokale Konfiguration
+.git
+.gitignore
+.husky
+
+# Lokale Env-Datei — im Container kommen die Werte aus docker-compose.yml
+.env
+.env.local
+
+# Docker- & Doku-Dateien werden nicht im Image gebraucht
+Dockerfile
+docker-compose*.yml*
+*.md
+
+# Logs & Sonstiges
+*.log
+.DS_Store
