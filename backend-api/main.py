@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-import httpx  # Wichtig für den Aufruf der KI-API
+import json
+import time
+
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -8,7 +11,6 @@ from zxcvbn import zxcvbn
 
 app = FastAPI(title="Aura.AI Backend Service")
 
-# CORS erlauben, damit Next.js mit dem Service kommunizieren kann
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,9 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- BESTEHENDE MODELLE FÜR PASSWORT ---
+
+# ---------------------------------------------------------------------------
+# Passwort-Check (unverändert)
+# ---------------------------------------------------------------------------
 class PasswordCheckRequest(BaseModel):
     password: str = Field(..., min_length=1)
+
 
 class PasswordCheckResponse(BaseModel):
     score: int
@@ -27,7 +33,23 @@ class PasswordCheckResponse(BaseModel):
     warning: str | None
 
 
-# --- NEUE MODELLE FÜR KI-USER-ANALYSE ---
+@app.post("/api/check-password", response_model=PasswordCheckResponse)
+async def check_password(body: PasswordCheckRequest):
+    try:
+        res = zxcvbn(body.password)
+        feedback_data = res.get("feedback", {})
+        return PasswordCheckResponse(
+            score=res.get("score", 0),
+            feedback=feedback_data.get("suggestions", []),
+            warning=feedback_data.get("warning") or None,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# KI-User-Analyse (überarbeitet)
+# ---------------------------------------------------------------------------
 class UserAnalyzeRequest(BaseModel):
     email: str
     days_since_registration: int
@@ -35,83 +57,115 @@ class UserAnalyzeRequest(BaseModel):
     login_count: int
     feature_clicks: int
 
+
 class UserAnalyzeResponse(BaseModel):
-    status: str  # z. B. "Active", "At Risk (Churn)", "Inactive"
-    summary: str  # Der KI-Text für das Dashboard
-    recommendation: str  # Die KI-Handlungsempfehlung
+    status: str
+    summary: str
+    recommendation: str
+    source: str  # "llm" oder "rules" – zeigt transparent, woher der Text kommt
 
 
-# --- 1. ENDPUNKT: PASSWORT PRÜFEN (UNVERÄNDERT) ---
-@app.post("/api/check-password", response_model=PasswordCheckResponse)
-async def check_password(body: PasswordCheckRequest):
-    try:
-        res = zxcvbn(body.password)
-        score = res.get("score", 0)
-        feedback_data = res.get("feedback", {})
-        suggestions = feedback_data.get("suggestions", [])
-        warning = feedback_data.get("warning", None)
-        
-        return PasswordCheckResponse(
-            score=score,
-            feedback=suggestions,
-            warning=warning if warning else None
+def classify_status(days_since_last_login: int, login_count: int, feature_clicks: int) -> str:
+    """
+    Deterministische Klassifizierung statt LLM-Ratespiel.
+    Kein Rate-Limit, keine Latenz, kein Risiko von Fehlklassifikation durch
+    Halluzination – und bei gleichen Zahlen immer dasselbe Ergebnis.
+    Schwellenwerte sind bewusst grob; gerne an echte Nutzungsdaten justieren.
+    """
+    if login_count == 0:
+        return "Inactive"
+    if days_since_last_login > 21:
+        return "Inactive"
+    if days_since_last_login > 7 or (login_count <= 2 and feature_clicks < 3):
+        return "At Risk"
+    return "Active"
+
+
+# Einfacher In-Memory-Cache, damit identische/ähnliche Kennzahlen nicht bei
+# jedem Seitenaufruf erneut ans LLM geschickt werden. Für Produktion besser
+# durch Redis oder eine DB-Spalte (kiAnalyzedAt) ersetzen, siehe Hinweise unten.
+_analysis_cache: dict[tuple, tuple[float, "UserAnalyzeResponse"]] = {}
+_CACHE_TTL_SECONDS = 60 * 30  # 30 Minuten
+
+
+def _cache_key(status: str, days_since_last_login: int, login_count: int, feature_clicks: int) -> tuple:
+    # Grobe Rundung, damit z.B. "1 Klick mehr" nicht sofort einen neuen LLM-Call auslöst
+    return (status, min(days_since_last_login, 30), min(login_count, 20), min(feature_clicks, 20))
+
+
+async def _call_llm(prompt: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "http://ollama:11434/api/generate",
+            json={
+                "model": "llama3",
+                "prompt": prompt,
+                "stream": False,
+                "format": "json",
+                "options": {
+                    "temperature": 0.2,  # niedriger = konsistentere, weniger "kreative" Ausreißer
+                    "num_predict": 120,  # begrenzt die Antwortlänge -> spürbar schneller
+                },
+            },
+            timeout=12.0,  # 60s war für ein interaktives Dashboard deutlich zu lang
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        response.raise_for_status()
+        raw = response.json().get("response", "{}")
+        return json.loads(raw)
 
 
-# --- 2. ENDPUNKT: KI-USER-ANALYSE (NEU) ---
 @app.post("/api/analyze-user", response_model=UserAnalyzeResponse)
 async def analyze_user(body: UserAnalyzeRequest):
+    # 1. Status: regelbasiert, sofort, ohne LLM
+    status = classify_status(body.days_since_last_login, body.login_count, body.feature_clicks)
+
+    # 2. Cache-Check, bevor überhaupt ans LLM gedacht wird
+    key = _cache_key(status, body.days_since_last_login, body.login_count, body.feature_clicks)
+    cached = _analysis_cache.get(key)
+    if cached and (time.time() - cached[0]) < _CACHE_TTL_SECONDS:
+        return cached[1]
+
+    # 3. LLM nur noch für die Formulierung, Status ist bereits fix
+    prompt = (
+        "Du bist ein knapper, professioneller SaaS-Analyst. "
+        f'Der Status des Nutzers steht bereits fest: "{status}". '
+        "Erkläre oder wiederhole ihn nicht, sondern liefere nur kurzen Kontext:\n"
+        f"- Registriert vor {body.days_since_registration} Tagen\n"
+        f"- Letzter Login vor {body.days_since_last_login} Tagen\n"
+        f"- {body.login_count} Logins insgesamt, {body.feature_clicks} Feature-Klicks\n\n"
+        "Antworte NUR mit JSON in exakt diesem Format, ohne Markdown-Codeblock:\n"
+        '{"summary": "Maximal 1-2 Sätze, sachlich, keine Wiederholung der Rohzahlen.", '
+        '"recommendation": "Eine konkrete, umsetzbare Handlung für den Admin, max. 1 Satz."}'
+    )
+
     try:
-        # Hier bauen wir den präzisen Prompt für die KI anhand der echten User-Zahlen
-        prompt = (
-            f"Analysiere das Verhalten dieses Nutzers:\n"
-            f"- Registriert vor: {body.days_since_registration} Tagen\n"
-            f"- Letzter Login vor: {body.days_since_last_login} Tagen\n"
-            f"- Anzahl Logins gesamt: {body.login_count}\n"
-            f"- Genutzte Kern-Features: {body.feature_clicks} Klicks\n\n"
-            f"Antworte strikt im folgenden JSON-Format ohne weiteren Text drumherum:\n"
-            f'{{"status": "Active" oder "At Risk" oder "Inactive", '
-            f'"summary": "Maximal 1 Satz Zusammenfassung des Verhaltens.", '
-            f'"recommendation": "Eine konkrete Aktion für den Admin in einem kurzen Stichpunkt."}}'
+        data = await _call_llm(prompt)
+        result = UserAnalyzeResponse(
+            status=status,
+            summary=data.get("summary", "Keine Analyse verfügbar."),
+            recommendation=data.get("recommendation", "Keine Empfehlung verfügbar."),
+            source="llm",
         )
-
-        # Wir rufen ein lokal laufendes KI-Modell (z.B. Llama 3 via Ollama) oder eine API auf
-        # Für das Beispiel nutzen wir Ollama, das im Docker-Netzwerk unter 'http://ollama:11434' erreichbar ist
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "http://ollama:11434/api/generate",
-                json={
-                    "model": "llama3",
-                    "prompt": prompt,
-                    "stream": False,
-                    "format": "json"  # Zwingt die KI, sauberes JSON zu liefern
-                },
-                timeout=60.0
-            )
-            
-            if response.status_code != 200:
-                raise HTTPException(status_code=500, detail="KI-Service nicht erreichbar")
-            
-            # Ergebnis der KI parsen
-            result_json = response.json()
-            ki_output = result_json.get("response")
-            
-            # Die Antwort der KI ist ein String im JSON-Format, den wir direkt als Python-Dict einlesen
-            import json
-            data = json.loads(ki_output)
-            
-            return UserAnalyzeResponse(
-                status=data.get("status", "Unknown"),
-                summary=data.get("summary", "Keine Analyse möglich."),
-                recommendation=data.get("recommendation", "Keine Empfehlung.")
-            )
-
-    except Exception as e:
-        # Fallback, falls die KI mal streikt oder nicht läuft, damit die App nicht abstürzt
-        return UserAnalyzeResponse(
-            status="Error",
-            summary=f"KI-Analyse temporär nicht verfügbar.",
-            recommendation="Bitte überprüfe die Server-Verbindung zur KI."
+    except Exception:
+        # Fallback: rein regelbasierte Texte statt Absturz oder langer Wartezeit
+        fallback_texts = {
+            "Active": (
+                "Nutzer ist regelmäßig aktiv und nutzt Kernfunktionen.",
+                "Keine Aktion nötig.",
+            ),
+            "At Risk": (
+                "Nutzungsfrequenz sinkt, Feature-Nutzung ist gering.",
+                "Re-Engagement-E-Mail oder kurzen Check-in senden.",
+            ),
+            "Inactive": (
+                "Nutzer hat sich lange nicht mehr eingeloggt.",
+                "Reaktivierungs-Kampagne prüfen oder Account archivieren.",
+            ),
+        }
+        summary, recommendation = fallback_texts.get(
+            status, ("Keine Analyse verfügbar.", "Keine Empfehlung verfügbar.")
         )
+        result = UserAnalyzeResponse(status=status, summary=summary, recommendation=recommendation, source="rules")
+
+    _analysis_cache[key] = (time.time(), result)
+    return result

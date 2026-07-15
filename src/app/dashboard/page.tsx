@@ -83,13 +83,13 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#1E2530] bg-[#12161D]">
               <User className="w-3.5 h-3.5 text-[#4CC9F0]" />
-              <span className="font-mono text-[11px] text-[#7C8494] uppercase tracking-wide">User Space</span>
+              <span className="font-mono text-[11px] text-[#7C8494] uppercase tracking-wide">Nutzerbereich</span>
             </div>
             <button
               onClick={handleLogout}
               className="bg-[#12161D] border border-[#1E2530] text-[#7C8494] hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 font-medium text-xs px-3 py-2 rounded-full transition-colors flex items-center gap-1.5"
             >
-              <LogOut className="w-3.5 h-3.5" /> Logout
+              <LogOut className="w-3.5 h-3.5" /> Abmelden
             </button>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
               </div>
               <h3 className="font-display font-semibold text-base mb-1.5">System-Integrität</h3>
               <div className="font-mono text-[11px] text-[#4CC9F0] bg-[#4CC9F0]/10 px-2 py-1 rounded inline-block">
-                ● ONLINE // SECURE
+                ● ONLINE // SICHER
               </div>
             </motion.div>
 

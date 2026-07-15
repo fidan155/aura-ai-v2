@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'dein_jwt_secret_hier');
+// Lazy statt beim Modul-Laden geprüft: `next build` (z. B. im Docker-Image-Build)
+// führt dieses Modul ohne Laufzeit-Env-Variablen aus, JWT_SECRET kommt bei diesem
+// Projekt erst zur Container-Laufzeit über docker-compose.yml.
+let cachedSecret: Uint8Array | null = null;
+function getSecret(): Uint8Array {
+  if (cachedSecret) return cachedSecret;
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable must be set');
+  }
+  cachedSecret = new TextEncoder().encode(process.env.JWT_SECRET);
+  return cachedSecret;
+}
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
@@ -17,7 +28,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Token verifizieren
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret());
     const role = payload.role;
 
     // 2. Admin-Schutz: Nur Admins dürfen auf /admin

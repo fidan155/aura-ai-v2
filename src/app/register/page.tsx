@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Terminal, Sparkles, Home, Shield, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 interface PasswordAnalysis {
@@ -101,7 +102,7 @@ export default function RegisterPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#1E2530] bg-[#0A0D12]">
             <Sparkles className="w-3.5 h-3.5 text-[#F5A623]" />
             <span className="font-mono text-[10px] text-[#7C8494] tracking-wide uppercase">
-              Aura Identity Setup
+              Aura Kontoerstellung
             </span>
           </div>
         </div>
@@ -120,23 +121,35 @@ export default function RegisterPage() {
         <form onSubmit={handleRegister} className="space-y-4">
           {/* Login-Daten */}
           <div className="space-y-3">
-            <Input
-              type="email"
-              placeholder="E-Mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
-            />
-            <div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-[#7C8494]">
+                E-Mail
+              </Label>
               <Input
-                type="password"
-                placeholder="Passwort"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="name@firma.de"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
               />
+            </div>
+            <div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-[#7C8494]">
+                  Passwort
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="mind. 8 Zeichen"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
+                />
+              </div>
 
               {/* Passwort-Stärken-Indikator */}
               {passwordAnalysis && (
@@ -184,31 +197,49 @@ export default function RegisterPage() {
 
           {/* Adress-Daten */}
           <div className="space-y-3">
-            <Input
-              type="text"
-              placeholder="Straße & Hausnummer"
-              value={strasse}
-              onChange={(e) => setStrasse(e.target.value)}
-              required
-              className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
-            />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="strasse" className="text-[#7C8494]">
+                Straße &amp; Hausnummer
+              </Label>
               <Input
+                id="strasse"
                 type="text"
-                placeholder="PLZ"
-                value={plz}
-                onChange={(e) => setPlz(e.target.value)}
+                placeholder="Musterstraße 1"
+                value={strasse}
+                onChange={(e) => setStrasse(e.target.value)}
                 required
                 className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
               />
-              <Input
-                type="text"
-                placeholder="Stadt"
-                value={stadt}
-                onChange={(e) => setStadt(e.target.value)}
-                required
-                className="col-span-2 bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
-              />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="plz" className="text-[#7C8494]">
+                  PLZ
+                </Label>
+                <Input
+                  id="plz"
+                  type="text"
+                  placeholder="12345"
+                  value={plz}
+                  onChange={(e) => setPlz(e.target.value)}
+                  required
+                  className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
+                />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor="stadt" className="text-[#7C8494]">
+                  Stadt
+                </Label>
+                <Input
+                  id="stadt"
+                  type="text"
+                  placeholder="Musterstadt"
+                  value={stadt}
+                  onChange={(e) => setStadt(e.target.value)}
+                  required
+                  className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
+                />
+              </div>
             </div>
           </div>
 
@@ -216,7 +247,7 @@ export default function RegisterPage() {
             type="submit"
             className="w-full bg-[#F5A623] text-[#0A0D12] font-semibold hover:bg-[#ffb945] transition-colors mt-2"
           >
-            Account erstellen
+            Konto erstellen
           </Button>
         </form>
 

@@ -1,54 +1,59 @@
 import { db } from '@/db';
 import { antraege, users } from '@/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
-import { cookies } from 'next/headers';
-import { NextRequest } from 'next/server'; // Import hinzugefügt
-import * as jose from 'jose';
+import { getAuthUser } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
-// 1. Alle Anträge aus der DB holen (mit NextRequest, um den Fehler zu beheben)
+// 1. Anträge aus der DB holen: Admins sehen alle, normale User nur ihre eigenen
 export async function GET(request: NextRequest) {
-  const alleAntraege = await db
-    .select()
-    .from(antraege)
-    .orderBy(asc(antraege.id));
-    
+  const authUser = await getAuthUser();
+  if (!authUser) {
+    return Response.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  }
+
+  const alleAntraege =
+    authUser.role === 'admin'
+      ? await db.select().from(antraege).orderBy(asc(antraege.id))
+      : await db.select().from(antraege).where(eq(antraege.userId, authUser.id)).orderBy(asc(antraege.id));
+
   return Response.json(alleAntraege);
 }
 
 // 2. Einen neuen Antrag in der DB speichern
-// 2. Einen neuen Antrag in der DB speichern
 export async function POST(request: NextRequest) {
+  const authUser = await getAuthUser();
+  if (!authUser) {
+    return Response.json({ success: false, error: 'Nicht angemeldet' }, { status: 401 });
+  }
+
   const { titel, beschreibung } = await request.json();
-  
+
   await db.insert(antraege).values({
     titel,
     beschreibung,
+    userId: authUser.id,
   });
 
   try {
-    // ✅ JETZT MIT await, da cookies() in Next.js 15 ein Promise ist
-    const cookieStore = await cookies(); 
-    const token = cookieStore.get('auth_token')?.value;
-
-    if (token) {
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-      const { payload } = await jose.jwtVerify(token, secret);
-      const userId = payload.id as number;
-
-      await db
-        .update(users)
-        .set({ featureClicks: sql`${users.featureClicks} + 1` })
-        .where(eq(users.id, userId));
-    }
+    await db
+      .update(users)
+      .set({ featureClicks: sql`${users.featureClicks} + 1` })
+      .where(eq(users.id, authUser.id));
   } catch (e) {
-    console.error("Fehler beim Erhöhen der Feature-Clicks:", e);
+    console.error('Fehler beim Erhöhen der Feature-Clicks:', e);
   }
 
   return Response.json({ success: true });
 }
-// 3. Status eines Antrags aktualisieren
+
+// 3. Status eines Antrags aktualisieren (nur Admins)
 export async function PUT(request: NextRequest) {
   try {
+    const authUser = await getAuthUser();
+    if (!authUser || authUser.role !== 'admin') {
+      return Response.json({ success: false, error: 'Nicht autorisiert' }, { status: 403 });
+    }
+
     const { id, status } = await request.json();
 
     if (!id || !status) {
@@ -61,7 +66,7 @@ export async function PUT(request: NextRequest) {
       .where(eq(antraege.id, id));
 
     return Response.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 }

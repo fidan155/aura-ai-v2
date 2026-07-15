@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 
 // Typisiertes SEO-Metadata-Objekt
 export const metadata: Metadata = {
-  title: 'Aura.AI - Next-Generation AI Infrastructure',
+  title: 'Aura.AI – Sicherheits-Infrastruktur der nächsten Generation',
   description:
-    'Automate security compliance, compute hyper-dimensional telemetry, and unify distributed intelligence layers under a localized zero-trust ecosystem.',
+    'Automatisiert Security-Compliance, wertet Telemetriedaten in Echtzeit aus und vereint verteilte Intelligenz-Ebenen in einem lokal betriebenen Zero-Trust-Ökosystem.',
   keywords: [
-    'AI SaaS',
-    'Cybersecurity',
-    'Enterprise AI',
+    'KI SaaS',
+    'Cybersicherheit',
+    'Enterprise KI',
     'Next.js',
     'Zero-Trust',
   ],
@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="de"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col relative bg-[#020204]">

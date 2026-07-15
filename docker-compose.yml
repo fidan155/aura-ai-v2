@@ -21,7 +21,7 @@ services:
     container_name: aura-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: geheim
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD muss in .env gesetzt sein}
       POSTGRES_DB: pk_db
     ports:
       - "5432:5432" # DB von außen erreichbar (für DB-Tools / Drizzle Studio)
@@ -54,8 +54,8 @@ services:
     image: aura-app # getaggtes Image, wird vom studio-Dienst wiederverwendet
     container_name: aura-frontend
     environment:
-      DATABASE_URL: postgres://postgres:geheim@postgres:5432/pk_db
-      JWT_SECRET: dein_super_sicheres_geheimnis_hier_123!
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD muss in .env gesetzt sein}@postgres:5432/pk_db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET muss in .env gesetzt sein}
       PYTHON_API_URL: http://backend:8000
       COOKIE_SECURE: "false" # HTTP über Traefik -> kein Secure-Flag
     depends_on:
@@ -76,7 +76,7 @@ services:
     image: aura-app # gleiches Image wie das Frontend (kein extra Build)
     container_name: aura-studio
     environment:
-      DATABASE_URL: postgres://postgres:geheim@postgres:5432/pk_db
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD muss in .env gesetzt sein}@postgres:5432/pk_db
     command: sh -c "npx drizzle-kit studio --host 0.0.0.0 --port 4983"
     ports:
       - "4983:4983"

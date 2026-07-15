@@ -33,6 +33,9 @@ export const antraege = pgTable('antraege', {
   status: text('status').default('offen'),
   beschreibung: text('beschreibung'),
   createdAt: timestamp('created_at').defaultNow(),
+  // Nullable, damit bereits bestehende Anträge (ohne Besitzer) nicht durch
+  // einen erzwungenen Push mit NOT NULL brechen.
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
 });
 
 // 4. One-to-One Relationen
@@ -45,7 +48,14 @@ export const usersRelations = relations(users, ({ one }) => ({
 
 export const adressenRelations = relations(adressen, ({ one }) => ({
   user: one(users, {
-    fields: [adressen.userId],  
-    references: [users.id],     
+    fields: [adressen.userId],
+    references: [users.id],
+  }),
+}));
+
+export const antraegeRelations = relations(antraege, ({ one }) => ({
+  user: one(users, {
+    fields: [antraege.userId],
+    references: [users.id],
   }),
 }));

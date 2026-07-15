@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Terminal, Sparkles, ArrowLeft } from 'lucide-react';
 
 const FONT_IMPORT = `
@@ -67,7 +68,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#1E2530] bg-[#0A0D12]">
             <Sparkles className="w-3.5 h-3.5 text-[#F5A623]" />
             <span className="font-mono text-[10px] text-[#7C8494] tracking-wide uppercase">
-              Aura Secure Gateway
+              Aura Sicherheitszugang
             </span>
           </div>
         </div>
@@ -80,31 +81,43 @@ export default function LoginPage() {
             <span className="font-display font-bold tracking-tight text-sm">AURA</span>
             <span className="font-mono text-[10px] text-[#7C8494]">v2.6</span>
           </div>
-          <h2 className="font-display font-bold text-2xl tracking-tight">Login</h2>
+          <h2 className="font-display font-bold text-2xl tracking-tight">Anmeldung</h2>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
-          <Input
-            type="email"
-            placeholder="E-Mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
-          />
-          <Input
-            type="password"
-            placeholder="Passwort"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-[#7C8494]">
+              E-Mail
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@firma.de"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-[#7C8494]">
+              Passwort
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-[#0A0D12] border-[#1E2530] text-[#ECEFF3] placeholder:text-[#7C8494] focus-visible:ring-[#4CC9F0]"
+            />
+          </div>
           <Button
             type="submit"
             className="w-full bg-[#F5A623] text-[#0A0D12] font-semibold hover:bg-[#ffb945] transition-colors"
           >
-            Login
+            Anmelden
           </Button>
         </form>
 

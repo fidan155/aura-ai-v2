@@ -3,15 +3,33 @@ import { users, adressen } from '@/db/schema';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_FIELD_LENGTH = 200;
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, strasse, plz, stadt } = await request.json();
 
     if (!email || !password || !strasse || !plz || !stadt) {
       return NextResponse.json(
-        { success: false, error: 'Alle Felder müssen ausgefüllt sein.' }, 
+        { success: false, error: 'Alle Felder müssen ausgefüllt sein.' },
         { status: 400 }
       );
+    }
+
+    if (typeof email !== 'string' || !EMAIL_REGEX.test(email)) {
+      return NextResponse.json({ success: false, error: 'Ungültige E-Mail-Adresse.' }, { status: 400 });
+    }
+
+    if (typeof password !== 'string' || password.length < 8) {
+      return NextResponse.json(
+        { success: false, error: 'Das Passwort muss mindestens 8 Zeichen lang sein.' },
+        { status: 400 }
+      );
+    }
+
+    if ([strasse, plz, stadt].some((value) => typeof value !== 'string' || value.length > MAX_FIELD_LENGTH)) {
+      return NextResponse.json({ success: false, error: 'Eingabe zu lang.' }, { status: 400 });
     }
 
     // 1. Passwort hashen
