@@ -12,14 +12,25 @@ type User = typeof users.$inferSelect;
 
 async function analysiereUser(user: User) {
   const jetzt = new Date().getTime();
-  const registriertAm = user.createdAt ? new Date(user.createdAt).getTime() : jetzt;
-  const letzterLoginAm = user.lastLogin ? new Date(user.lastLogin).getTime() : jetzt;
+  const registriertAm = user.createdAt
+    ? new Date(user.createdAt).getTime()
+    : jetzt;
+  const letzterLoginAm = user.lastLogin
+    ? new Date(user.lastLogin).getTime()
+    : jetzt;
 
-  const tageSeitRegistrierung = Math.max(0, Math.floor((jetzt - registriertAm) / (1000 * 60 * 60 * 24)));
-  const tageSeitLetztemLogin = Math.max(0, Math.floor((jetzt - letzterLoginAm) / (1000 * 60 * 60 * 24)));
+  const tageSeitRegistrierung = Math.max(
+    0,
+    Math.floor((jetzt - registriertAm) / (1000 * 60 * 60 * 24))
+  );
+  const tageSeitLetztemLogin = Math.max(
+    0,
+    Math.floor((jetzt - letzterLoginAm) / (1000 * 60 * 60 * 24))
+  );
 
   try {
-    const pythonRes = await fetch('http://backend:8000/api/analyze-user', {
+    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
+    const pythonRes = await fetch(`${pythonApiUrl}/api/analyze-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -84,8 +95,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-
-
-
- 

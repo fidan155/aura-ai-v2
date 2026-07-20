@@ -8,7 +8,7 @@ export const users = pgTable('users', {
   password: text('password').notNull(),
   role: text('role').default('user'),
   createdAt: timestamp('created_at').defaultNow(),
-  
+
   // --- NEU FÜR KI-ANALYSE ---
   lastLogin: timestamp('last_login').defaultNow(),
   loginCount: integer('login_count').default(1),
@@ -35,14 +35,16 @@ export const antraege = pgTable('antraege', {
   createdAt: timestamp('created_at').defaultNow(),
   // Nullable, damit bereits bestehende Anträge (ohne Besitzer) nicht durch
   // einen erzwungenen Push mit NOT NULL brechen.
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, {
+    onDelete: 'cascade',
+  }),
 });
 
 // 4. One-to-One Relationen
 export const usersRelations = relations(users, ({ one }) => ({
   adresse: one(adressen, {
-    fields: [users.id],         
-    references: [adressen.id],  
+    fields: [users.id],
+    references: [adressen.userId],
   }),
 }));
 
