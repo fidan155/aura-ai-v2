@@ -61,7 +61,14 @@ const FONT_IMPORT = `
 }
 `;
 
-const logos = ['VECTORA', 'NORTHBEAM', 'GRIDLOCK', 'FERROX', 'HALFDOME', 'OPALINE'];
+const logos = [
+  'VECTORA',
+  'NORTHBEAM',
+  'GRIDLOCK',
+  'FERROX',
+  'HALFDOME',
+  'OPALINE',
+];
 
 const stats = [
   { value: '99,98%', label: 'Erkennungsgenauigkeit', bar: 'w-[98%]' },
@@ -144,8 +151,13 @@ const NavLink = ({ href, children }) => (
 
 const Eyebrow = ({ n, children }) => (
   <div className="flex items-center gap-2 mb-4 justify-center">
-    <span className="font-mono text-[11px] text-[#F5A623] tracking-widest">// {n}</span>
-    <span className="font-mono text-[11px] text-[#7C8494] tracking-[0.25em] uppercase">{children}</span>
+    <span className="font-mono text-[11px] text-[#F5A623] tracking-widest">
+      {'// '}
+      {n}
+    </span>
+    <span className="font-mono text-[11px] text-[#7C8494] tracking-[0.25em] uppercase">
+      {children}
+    </span>
   </div>
 );
 
@@ -177,14 +189,39 @@ function RadarSignature() {
             strokeWidth="1"
           />
         ))}
-        <line x1="30" y1="200" x2="370" y2="200" stroke="#1E2530" strokeWidth="1" />
-        <line x1="200" y1="30" x2="200" y2="370" stroke="#1E2530" strokeWidth="1" />
+        <line
+          x1="30"
+          y1="200"
+          x2="370"
+          y2="200"
+          stroke="#1E2530"
+          strokeWidth="1"
+        />
+        <line
+          x1="200"
+          y1="30"
+          x2="200"
+          y2="370"
+          stroke="#1E2530"
+          strokeWidth="1"
+        />
 
         <g className="radar-sweep">
-          <path d="M200 200 L200 30 A170 170 0 0 1 347 115 Z" fill="url(#sweepGrad)" />
+          <path
+            d="M200 200 L200 30 A170 170 0 0 1 347 115 Z"
+            fill="url(#sweepGrad)"
+          />
         </g>
 
-        <circle cx="200" cy="200" r="170" fill="none" stroke="#4CC9F0" strokeOpacity="0.35" strokeWidth="1.5" />
+        <circle
+          cx="200"
+          cy="200"
+          r="170"
+          fill="none"
+          stroke="#4CC9F0"
+          strokeOpacity="0.35"
+          strokeWidth="1.5"
+        />
 
         {nodes.map((n, i) => (
           <g key={i}>
@@ -204,7 +241,7 @@ function RadarSignature() {
         <circle cx="200" cy="200" r="4" fill="#ECEFF3" />
       </svg>
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-[0.3em] text-[#7C8494] uppercase">
-Live-Telemetrie
+        Live-Telemetrie
       </div>
     </div>
   );
@@ -219,7 +256,9 @@ export default function LandingPage() {
 
   const prevTestimonial = () => {
     setTestimonialDir(-1);
-    setTestimonialIndex((i) => (i - 1 + testimonials.length) % testimonials.length);
+    setTestimonialIndex(
+      (i) => (i - 1 + testimonials.length) % testimonials.length
+    );
   };
   const nextTestimonial = () => {
     setTestimonialDir(1);
@@ -242,9 +281,14 @@ export default function LandingPage() {
         <div className="rounded-2xl border border-[#1E2530] bg-[#0A0D12]/80 backdrop-blur-xl px-5 py-3 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md bg-[#F5A623] flex items-center justify-center">
-              <Terminal className="w-3.5 h-3.5 text-[#0A0D12]" strokeWidth={2.5} />
+              <Terminal
+                className="w-3.5 h-3.5 text-[#0A0D12]"
+                strokeWidth={2.5}
+              />
             </div>
-            <span className="font-display font-bold tracking-tight text-sm">AURA</span>
+            <span className="font-display font-bold tracking-tight text-sm">
+              AURA
+            </span>
             <span className="font-mono text-[10px] text-[#7C8494]">v2.6</span>
           </div>
 
@@ -256,7 +300,10 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden sm:flex items-center gap-3">
-            <Link href="/login" className="text-xs font-medium text-[#7C8494] hover:text-white transition-colors px-3 py-1.5">
+            <Link
+              href="/login"
+              className="text-xs font-medium text-[#7C8494] hover:text-white transition-colors px-3 py-1.5"
+            >
               Anmelden
             </Link>
             <Link
@@ -272,7 +319,11 @@ export default function LandingPage() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={menuOpen ? 'Menü schließen' : 'Menü öffnen'}
           >
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {menuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
 
@@ -301,7 +352,9 @@ export default function LandingPage() {
           <div className="animate-rise">
             <div className="inline-flex items-center gap-1.5 border border-[#1E2530] bg-[#12161D] rounded-full px-3 py-1 mb-6">
               <Sparkles className="w-3 h-3 text-[#F5A623]" />
-              <span className="font-mono text-[11px] text-[#7C8494] tracking-wide">überwacht aktuell 40.000+ Services</span>
+              <span className="font-mono text-[11px] text-[#7C8494] tracking-wide">
+                überwacht aktuell 40.000+ Services
+              </span>
             </div>
 
             <h1 className="font-display font-bold tracking-tight text-4xl sm:text-5xl md:text-6xl leading-[1.08] mb-6">
@@ -312,7 +365,8 @@ export default function LandingPage() {
 
             <p className="text-[#7C8494] text-base sm:text-lg leading-relaxed mb-9 max-w-lg">
               Aura überwacht deine Infrastruktur in Echtzeit, meldet nur, was
-              wirklich relevant ist, und schließt die Lücke, bevor aus einem Vorfall eine Schlagzeile wird.
+              wirklich relevant ist, und schließt die Lücke, bevor aus einem
+              Vorfall eine Schlagzeile wird.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
@@ -340,7 +394,10 @@ export default function LandingPage() {
         <div className="flex whitespace-nowrap">
           <div className="flex gap-16 animate-marquee pr-16">
             {[...logos, ...logos].map((logo, idx) => (
-              <span key={idx} className="font-display font-semibold text-lg text-[#7C8494] tracking-wide">
+              <span
+                key={idx}
+                className="font-display font-semibold text-lg text-[#7C8494] tracking-wide"
+              >
                 {logo}
               </span>
             ))}
@@ -369,10 +426,16 @@ export default function LandingPage() {
                 <div className="w-10 h-10 rounded-lg bg-[#0A0D12] border border-[#1E2530] flex items-center justify-center text-[#4CC9F0] group-hover:text-[#F5A623] group-hover:border-[#F5A623]/40 transition-colors">
                   {feat.icon}
                 </div>
-                <span className="font-mono text-[11px] text-[#7C8494]">{feat.tag}</span>
+                <span className="font-mono text-[11px] text-[#7C8494]">
+                  {feat.tag}
+                </span>
               </div>
-              <h3 className="font-display font-semibold text-base mb-2.5">{feat.title}</h3>
-              <p className="text-[#7C8494] text-sm leading-relaxed">{feat.description}</p>
+              <h3 className="font-display font-semibold text-base mb-2.5">
+                {feat.title}
+              </h3>
+              <p className="text-[#7C8494] text-sm leading-relaxed">
+                {feat.description}
+              </p>
             </div>
           ))}
         </div>
@@ -386,7 +449,9 @@ export default function LandingPage() {
             <div>
               <div className="inline-flex items-center gap-1.5 border border-[#1E2530] rounded-full px-3 py-1 mb-5">
                 <Lock className="w-3.5 h-3.5 text-[#F5A623]" />
-                <span className="font-mono text-[11px] text-[#7C8494]">isoliert by design</span>
+                <span className="font-mono text-[11px] text-[#7C8494]">
+                  isoliert by design
+                </span>
               </div>
               <h3 className="font-display font-bold text-2xl md:text-3xl tracking-tight mb-4">
                 Läuft innerhalb deiner eigenen Umgebung
@@ -397,13 +462,16 @@ export default function LandingPage() {
               </p>
               <ul className="space-y-3 text-sm text-[#ECEFF3]">
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-[#4CC9F0] shrink-0" /> SOC 2 Type II, ISO 27001 zertifiziert
+                  <CheckCircle2 className="w-4 h-4 text-[#4CC9F0] shrink-0" />{' '}
+                  SOC 2 Type II, ISO 27001 zertifiziert
                 </li>
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-[#4CC9F0] shrink-0" /> Signierte Offline-Policy-Updates
+                  <CheckCircle2 className="w-4 h-4 text-[#4CC9F0] shrink-0" />{' '}
+                  Signierte Offline-Policy-Updates
                 </li>
                 <li className="flex items-center gap-3">
-                  <CheckCircle2 className="w-4 h-4 text-[#4CC9F0] shrink-0" /> Vollständiger Audit-Trail, jederzeit exportierbar
+                  <CheckCircle2 className="w-4 h-4 text-[#4CC9F0] shrink-0" />{' '}
+                  Vollständiger Audit-Trail, jederzeit exportierbar
                 </li>
               </ul>
             </div>
@@ -413,13 +481,21 @@ export default function LandingPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-[#1E2530]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#1E2530]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#1E2530]" />
-                <span className="ml-2 text-[10px] text-[#7C8494] tracking-widest uppercase">aura-cli</span>
+                <span className="ml-2 text-[10px] text-[#7C8494] tracking-widest uppercase">
+                  aura-cli
+                </span>
               </div>
-              <p className="text-[#7C8494]">$ aura init --scope=prod-eu-central</p>
-              <p className="text-[#4CC9F0]">[ok] Baseline erfasst — 14.203 Services erkannt</p>
+              <p className="text-[#7C8494]">
+                $ aura init --scope=prod-eu-central
+              </p>
+              <p className="text-[#4CC9F0]">
+                [ok] Baseline erfasst — 14.203 Services erkannt
+              </p>
               <p className="text-[#4CC9F0]">[ok] Policy-Engine aktiv</p>
               <p className="text-[#7C8494] mt-3">$ aura status</p>
-              <p className="text-white">autonome Abdeckung: 100 % · offene Vorfälle: 0</p>
+              <p className="text-white">
+                autonome Abdeckung: 100 % · offene Vorfälle: 0
+              </p>
               <span className="inline-block w-2 h-4 bg-[#F5A623] align-middle mt-1" />
             </div>
           </div>
@@ -431,14 +507,23 @@ export default function LandingPage() {
         <Eyebrow n="03">Kennzahlen</Eyebrow>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {stats.map((stat, idx) => (
-            <div key={idx} className="rounded-2xl border border-[#1E2530] bg-[#12161D] p-6">
+            <div
+              key={idx}
+              className="rounded-2xl border border-[#1E2530] bg-[#12161D] p-6"
+            >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="font-display font-bold text-2xl sm:text-3xl tracking-tight">{stat.value}</span>
+                <span className="font-display font-bold text-2xl sm:text-3xl tracking-tight">
+                  {stat.value}
+                </span>
                 <TrendingUp className="w-3.5 h-3.5 text-[#4CC9F0]" />
               </div>
-              <div className="font-mono text-[11px] text-[#7C8494] uppercase tracking-wider mb-4">{stat.label}</div>
+              <div className="font-mono text-[11px] text-[#7C8494] uppercase tracking-wider mb-4">
+                {stat.label}
+              </div>
               <div className="h-1 rounded-full bg-[#0A0D12] overflow-hidden">
-                <div className={`${stat.bar} h-full bg-[#4CC9F0] rounded-full`} />
+                <div
+                  className={`${stat.bar} h-full bg-[#4CC9F0] rounded-full`}
+                />
               </div>
             </div>
           ))}
@@ -465,7 +550,9 @@ export default function LandingPage() {
             <div
               key={testimonialIndex}
               className={`flex flex-col justify-between ${
-                testimonialDir === 1 ? 'animate-testimonial-next' : 'animate-testimonial-prev'
+                testimonialDir === 1
+                  ? 'animate-testimonial-next'
+                  : 'animate-testimonial-prev'
               }`}
             >
               <p className="text-[#ECEFF3] text-sm md:text-base leading-relaxed mb-8">
@@ -479,8 +566,12 @@ export default function LandingPage() {
                     .join('')}
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">{testimonials[testimonialIndex].author}</div>
-                  <div className="text-xs text-[#7C8494]">{testimonials[testimonialIndex].role}</div>
+                  <div className="font-semibold text-sm">
+                    {testimonials[testimonialIndex].author}
+                  </div>
+                  <div className="text-xs text-[#7C8494]">
+                    {testimonials[testimonialIndex].role}
+                  </div>
                 </div>
               </div>
             </div>
@@ -501,7 +592,9 @@ export default function LandingPage() {
                 onClick={() => goToTestimonial(idx)}
                 aria-label={`Zu Testimonial ${idx + 1} wechseln`}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  idx === testimonialIndex ? 'w-6 bg-[#F5A623]' : 'w-1.5 bg-[#1E2530]'
+                  idx === testimonialIndex
+                    ? 'w-6 bg-[#F5A623]'
+                    : 'w-1.5 bg-[#1E2530]'
                 }`}
               />
             ))}
@@ -536,7 +629,9 @@ export default function LandingPage() {
       {/* FAQ */}
       <section id="faq" className="py-16 px-6 max-w-3xl mx-auto">
         <Eyebrow n="05">FAQ</Eyebrow>
-        <h3 className="font-display font-bold text-2xl text-center mb-10">Häufig gestellte Fragen</h3>
+        <h3 className="font-display font-bold text-2xl text-center mb-10">
+          Häufig gestellte Fragen
+        </h3>
         <div className="rounded-2xl border border-[#1E2530] bg-[#12161D] divide-y divide-[#1E2530]">
           {faqs.map((f, idx) => (
             <div key={idx}>
@@ -552,25 +647,47 @@ export default function LandingPage() {
                 />
               </button>
               {openFaq === idx && (
-                <p className="px-6 pb-4 text-[#7C8494] text-sm leading-relaxed">{f.a}</p>
+                <p className="px-6 pb-4 text-[#7C8494] text-sm leading-relaxed">
+                  {f.a}
+                </p>
               )}
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="py-10 px-6 text-center font-mono text-[11px] text-[#7C8494] tracking-wider border-t border-[#1E2530]">
-        AURA.AI — SICHERHEITS-OPERATIONSZENTRALE
+      <footer className="py-10 px-6 text-center font-mono text-[11px] text-[#7C8494] tracking-wider border-t border-[#1E2530] space-y-3">
+        <div>AURA.AI — SICHERHEITS-OPERATIONSZENTRALE</div>
+        <div className="flex items-center justify-center gap-4 normal-case tracking-normal">
+          <Link
+            href="/impressum"
+            className="hover:text-white transition-colors"
+          >
+            Impressum
+          </Link>
+          <Link
+            href="/datenschutz"
+            className="hover:text-white transition-colors"
+          >
+            Datenschutzerklärung
+          </Link>
+        </div>
       </footer>
 
       {/* MODAL */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          />
           <div className="relative bg-[#12161D] border border-[#1E2530] rounded-2xl p-6 w-full max-w-md shadow-2xl z-10 animate-rise">
-            <h3 className="font-display font-semibold text-lg mb-1">Zugang anfragen</h3>
+            <h3 className="font-display font-semibold text-lg mb-1">
+              Zugang anfragen
+            </h3>
             <p className="text-[#7C8494] text-xs sm:text-sm mb-5">
-              Erzähl uns kurz von deiner Umgebung — wir melden uns innerhalb eines Werktags.
+              Erzähl uns kurz von deiner Umgebung — wir melden uns innerhalb
+              eines Werktags.
             </p>
             <div className="space-y-3 mb-5">
               <input

@@ -11,6 +11,7 @@ kein Node, kein Python, keine Datenbank musst du selbst installieren. Docker bau
 2. Docker Desktop **starten** und warten, bis es oben „Running / grün" anzeigt.
 
 Prüfen im Terminal (muss eine Version ausgeben):
+
 ```bash
 docker --version
 docker compose version
@@ -18,16 +19,20 @@ docker compose version
 
 ---
 
-## ▶️ Starten (3 Befehle)
+## ▶️ Starten (4 Befehle)
 
 ```bash
 # 1) In den entpackten Projektordner wechseln
 cd ~/Desktop/nextjs-product-challenge
 
-# 2) Alles bauen und starten (erster Start dauert 3–5 Min, danach Sekunden)
+# 2) .env anlegen und POSTGRES_PASSWORD, JWT_SECRET und OPENAI_API_KEY eintragen
+#    (OpenAI API Key: https://platform.openai.com/api-keys)
+cp .env.example .env
+
+# 3) Alles bauen und starten (erster Start dauert 3–5 Min, danach Sekunden)
 docker compose up -d --build
 
-# 3) Status prüfen – alle 5 Container sollen "Up" sein
+# 4) Status prüfen – alle Container sollen "Up" sein
 docker compose ps
 ```
 
@@ -69,6 +74,7 @@ und kannst Einträge sogar direkt bearbeiten oder löschen.
 > oben ist (`docker compose ps`), dann Seite neu laden.
 
 ### Alternative: schnell per SQL im Terminal
+
 ```bash
 docker compose exec postgres psql -U postgres -d pk_db
 # Beispiele:
@@ -96,9 +102,10 @@ docker compose logs -f frontend  # Logs live ansehen
    `/api-python/login` – die gibt es nicht. Der Login läuft über die Next.js-Route
    `/api/login` (bcrypt + JWT). → gefixt.
 2. **Keine `.env`:** Die Datei ist in `.gitignore`, kam also nie per Git an.
-   Ohne `DATABASE_URL` / `JWT_SECRET` scheitern Login & Registrierung.
-   → Im Docker-Weg liefert `docker-compose.yml` diese Werte automatisch, du musst
-   nichts setzen. (Eine Beispiel-`.env` liegt trotzdem bei.)
+   Ohne `DATABASE_URL` / `JWT_SECRET` / `OPENAI_API_KEY` scheitern Login,
+   Registrierung bzw. die KI-Analyse. → `docker-compose.yml` baut `DATABASE_URL`
+   selbst zusammen, `POSTGRES_PASSWORD` / `JWT_SECRET` / `OPENAI_API_KEY`
+   müssen aber in der `.env` gesetzt sein (siehe `.env.example`).
 3. **Python-Service crashte auf Python < 3.10** (`str | None` in `main.py`).
    → mit `from __future__ import annotations` versionsunabhängig gemacht.
 4. **Datenbank-Tabellen fehlten.** → Werden jetzt beim Start automatisch angelegt
@@ -114,13 +121,16 @@ Alle diese Fixes sind in diesem ZIP bereits enthalten – einfach starten.
 
 Falls du es doch ohne Docker willst, brauchst du Node 20+, Python 3.11+ und eine
 Postgres-DB. Dann:
+
 ```bash
 npm install
 python3 -m venv backend-api/.venv
 backend-api/.venv/bin/pip install -r backend-api/requirements.txt
 # .env anlegen (siehe beiliegende .env), DB starten, dann:
 npx drizzle-kit push
+export OPENAI_API_KEY=sk-...                          # im Ordner backend-api, vor uvicorn
 backend-api/.venv/bin/uvicorn main:app --port 8001   # im Ordner backend-api
 npm run dev                                           # im Projekt-Root
 ```
+
 Öffnen dann unter http://localhost:3000 (ohne Traefik/Subdomain).

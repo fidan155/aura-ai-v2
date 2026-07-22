@@ -7,10 +7,8 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--api.insecure=true" # Dashboard auf :8080 (nur lokal)
     ports:
       - "80:80"
-      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
@@ -24,7 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD muss in .env gesetzt sein}
       POSTGRES_DB: pk_db
     ports:
-      - "5432:5432" # DB von außen erreichbar (für DB-Tools / Drizzle Studio)
+      - "127.0.0.1:5432:5432" # nur vom Host erreichbar (für DB-Tools / Drizzle Studio), nicht extern
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -34,10 +32,12 @@ services:
       retries: 15
     restart: unless-stopped
 
-  # --- Python-Microservice (Passwort-Checker) ---
+  # --- Python-Microservice (Passwort-Checker + KI-Analyse) ---
   backend:
     build: ./backend-api
     container_name: aura-backend
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY muss in .env gesetzt sein}
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
@@ -79,20 +79,11 @@ services:
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD muss in .env gesetzt sein}@postgres:5432/pk_db
     command: sh -c "npx drizzle-kit studio --host 0.0.0.0 --port 4983"
     ports:
-      - "4983:4983"
+      - "127.0.0.1:4983:4983" # nur vom Host erreichbar, nicht extern
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
 
-    # --- Lokale KI (Ollama) ---
-  ollama:
-    image: ollama/ollama:latest
-    container_name: aura-ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
-
 volumes:
   pgdata:
-  ollama_data:

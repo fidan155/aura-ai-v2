@@ -4,10 +4,14 @@ import { eq, sql } from 'drizzle-orm'; // sql importiert für das Hochzählen
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { signAuthToken } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 // Einfacher In-Memory-Rate-Limiter gegen Brute-Force auf einzelne E-Mails.
 // Für Multi-Instance-Deployments besser durch Redis o.ä. ersetzen.
-const loginAttempts = new Map<string, { count: number; firstAttempt: number }>();
+const loginAttempts = new Map<
+  string,
+  { count: number; firstAttempt: number }
+>();
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000;
 
@@ -36,19 +40,28 @@ export async function POST(request: NextRequest) {
 
     if (isRateLimited(email)) {
       return NextResponse.json(
-        { success: false, error: 'Zu viele Fehlversuche. Bitte in ein paar Minuten erneut versuchen.' },
+        {
+          success: false,
+          error:
+            'Zu viele Fehlversuche. Bitte in ein paar Minuten erneut versuchen.',
+        },
         { status: 429 }
       );
     }
 
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    const isPasswordCorrect = user ? await bcrypt.compare(password, user.password) : false;
+    const isPasswordCorrect = user
+      ? await bcrypt.compare(password, user.password)
+      : false;
 
     // Bewusst identische Fehlermeldung/Statuscode für "User unbekannt" und
     // "Passwort falsch", damit sich E-Mail-Adressen nicht per Login enumerieren lassen.
     if (!user || !isPasswordCorrect) {
       recordFailedAttempt(email);
-      return NextResponse.json({ success: false, error: 'Ungültige Anmeldedaten' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: 'Ungültige Anmeldedaten' },
+        { status: 401 }
+      );
     }
 
     loginAttempts.delete(email);
@@ -57,34 +70,41 @@ export async function POST(request: NextRequest) {
     await db
       .update(users)
       .set({
-        lastLogin: new Date(),                     // Setzt das aktuelle Datum
+        lastLogin: new Date(), // Setzt das aktuelle Datum
         loginCount: sql`${users.loginCount} + 1`, // Erhöht den bestehenden Zähler um 1
       })
       .where(eq(users.id, user.id));
     // --------------------------------------------
 
     // JWT Token erstellen
-    const token = await signAuthToken({ id: user.id, email: user.email, role: user.role || 'user' });
+    const token = await signAuthToken({
+      id: user.id,
+      email: user.email,
+      role: user.role || 'user',
+    });
 
     // Response mit sicherem HTTP-Only Cookie erstellen
-    const response = NextResponse.json({ 
-      success: true, 
-      role: user.role || 'user' 
+    const response = NextResponse.json({
+      success: true,
+      role: user.role || 'user',
     });
 
     response.cookies.set({
       name: 'auth_token',
       value: token,
       httpOnly: true,
-      secure: process.env.COOKIE_SECURE === 'true', 
+      secure: process.env.COOKIE_SECURE === 'true',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24,
       path: '/',
     });
 
     return response;
-
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error) {
+    logger.error('Login fehlgeschlagen', { error });
+    return NextResponse.json(
+      { success: false, error: 'Systemfehler. Bitte später erneut versuchen.' },
+      { status: 500 }
+    );
   }
 }

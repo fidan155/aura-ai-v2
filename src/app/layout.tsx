@@ -12,11 +12,17 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const title = 'Aura.AI – Sicherheits-Infrastruktur der nächsten Generation';
+const description =
+  'Automatisiert Security-Compliance, wertet Telemetriedaten in Echtzeit aus und vereint verteilte Intelligenz-Ebenen in einem lokal betriebenen Zero-Trust-Ökosystem.';
+
 // Typisiertes SEO-Metadata-Objekt
 export const metadata: Metadata = {
-  title: 'Aura.AI – Sicherheits-Infrastruktur der nächsten Generation',
-  description:
-    'Automatisiert Security-Compliance, wertet Telemetriedaten in Echtzeit aus und vereint verteilte Intelligenz-Ebenen in einem lokal betriebenen Zero-Trust-Ökosystem.',
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || 'https://aura.localhost'
+  ),
+  title,
+  description,
   keywords: [
     'KI SaaS',
     'Cybersicherheit',
@@ -24,6 +30,17 @@ export const metadata: Metadata = {
     'Next.js',
     'Zero-Trust',
   ],
+  openGraph: {
+    title,
+    description,
+    type: 'website',
+    locale: 'de_DE',
+  },
+  twitter: {
+    card: 'summary',
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({

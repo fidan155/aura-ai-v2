@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Terminal, Sparkles, Home, Shield, AlertTriangle, ArrowLeft } from 'lucide-react';
+import {
+  Terminal,
+  Sparkles,
+  Home,
+  Shield,
+  AlertTriangle,
+  ArrowLeft,
+  Loader2,
+} from 'lucide-react';
 
 interface PasswordAnalysis {
   score: number;
@@ -23,16 +31,20 @@ const FONT_IMPORT = `
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordAnalysis, setPasswordAnalysis] = useState<PasswordAnalysis | null>(null);
+  const [passwordAnalysis, setPasswordAnalysis] =
+    useState<PasswordAnalysis | null>(null);
   const [strasse, setStrasse] = useState('');
   const [plz, setPlz] = useState('');
   const [stadt, setStadt] = useState('');
   const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   // Passwort-Checker ansteuern
   useEffect(() => {
     if (!password) {
+      // Analyse zurücksetzen, wenn das Passwortfeld geleert wird.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPasswordAnalysis(null);
       return;
     }
@@ -58,22 +70,29 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const response = await fetch(`/api/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, strasse, plz, stadt }),
-    });
+    try {
+      const response = await fetch(`/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, strasse, plz, stadt }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok && data.success) {
-      setMessage(`Erfolg! Weiterleitung zum Login...`);
-      setTimeout(() => {
-        router.push('/login');
-      }, 1500);
-    } else {
-      setMessage(`Fehler: ${data.error}`);
+      if (response.ok && data.success) {
+        setMessage(`Erfolg! Weiterleitung zum Login...`);
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
+      } else {
+        setMessage(`Fehler: ${data.error}`);
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      setMessage('Fehler: Server nicht erreichbar');
+      setIsSubmitting(false);
     }
   };
 
@@ -110,12 +129,19 @@ export default function RegisterPage() {
         <div className="space-y-2 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <div className="w-7 h-7 rounded-md bg-[#F5A623] flex items-center justify-center">
-              <Terminal className="w-3.5 h-3.5 text-[#0A0D12]" strokeWidth={2.5} />
+              <Terminal
+                className="w-3.5 h-3.5 text-[#0A0D12]"
+                strokeWidth={2.5}
+              />
             </div>
-            <span className="font-display font-bold tracking-tight text-sm">AURA</span>
+            <span className="font-display font-bold tracking-tight text-sm">
+              AURA
+            </span>
             <span className="font-mono text-[10px] text-[#7C8494]">v2.6</span>
           </div>
-          <h2 className="font-display font-bold text-2xl tracking-tight">Registrierung</h2>
+          <h2 className="font-display font-bold text-2xl tracking-tight">
+            Registrierung
+          </h2>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">
@@ -158,14 +184,18 @@ export default function RegisterPage() {
                     <span className="flex items-center gap-1">
                       <Shield className="w-3 h-3 text-[#4CC9F0]" /> STÄRKE:
                     </span>
-                    <span className="font-bold text-[#ECEFF3]">{passwordAnalysis.score} / 4</span>
+                    <span className="font-bold text-[#ECEFF3]">
+                      {passwordAnalysis.score} / 4
+                    </span>
                   </div>
                   <div className="grid grid-cols-4 gap-1">
                     {[0, 1, 2, 3].map((index) => (
                       <div
                         key={index}
                         className={`h-1 rounded-sm transition-colors duration-300 ${
-                          index <= passwordAnalysis.score - 1 ? getScoreColor(passwordAnalysis.score) : 'bg-[#1E2530]'
+                          index <= passwordAnalysis.score - 1
+                            ? getScoreColor(passwordAnalysis.score)
+                            : 'bg-[#1E2530]'
                         }`}
                       />
                     ))}
@@ -245,9 +275,17 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
+            disabled={isSubmitting}
             className="w-full bg-[#F5A623] text-[#0A0D12] font-semibold hover:bg-[#ffb945] transition-colors mt-2"
           >
-            Konto erstellen
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Konto wird
+                erstellt...
+              </>
+            ) : (
+              'Konto erstellen'
+            )}
           </Button>
         </form>
 
@@ -267,7 +305,9 @@ export default function RegisterPage() {
               message.includes('Erfolg') ? 'text-[#4CC9F0]' : 'text-red-400'
             }`}
           >
-            {message.includes('Erfolg') ? `[OK] ${message}` : `[ERROR] ${message}`}
+            {message.includes('Erfolg')
+              ? `[OK] ${message}`
+              : `[ERROR] ${message}`}
           </p>
         )}
       </div>

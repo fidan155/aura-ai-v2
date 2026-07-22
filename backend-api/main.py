@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 
-import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 from zxcvbn import zxcvbn
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger("aura-backend")
+
 app = FastAPI(title="Aura.AI Backend Service")
+
+# Liest OPENAI_API_KEY aus der Umgebung.
+_openai_client = AsyncOpenAI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,7 +51,8 @@ async def check_password(body: PasswordCheckRequest):
             warning=feedback_data.get("warning") or None,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error("Passwort-Check fehlgeschlagen: %s", e)
+        raise HTTPException(status_code=500, detail="Systemfehler beim Passwort-Check.")
 
 
 # ---------------------------------------------------------------------------
@@ -93,25 +101,29 @@ def _cache_key(status: str, days_since_last_login: int, login_count: int, featur
     return (status, min(days_since_last_login, 30), min(login_count, 20), min(feature_clicks, 20))
 
 
+_ANALYSIS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "summary": {"type": "string"},
+        "recommendation": {"type": "string"},
+    },
+    "required": ["summary", "recommendation"],
+    "additionalProperties": False,
+}
+
+
 async def _call_llm(prompt: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "http://ollama:11434/api/generate",
-            json={
-                "model": "llama3",
-                "prompt": prompt,
-                "stream": False,
-                "format": "json",
-                "options": {
-                    "temperature": 0.2,  # niedriger = konsistentere, weniger "kreative" Ausreißer
-                    "num_predict": 120,  # begrenzt die Antwortlänge -> spürbar schneller
-                },
-            },
-            timeout=12.0,  # 60s war für ein interaktives Dashboard deutlich zu lang
-        )
-        response.raise_for_status()
-        raw = response.json().get("response", "{}")
-        return json.loads(raw)
+    response = await _openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        max_tokens=300,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {"name": "user_analysis", "strict": True, "schema": _ANALYSIS_SCHEMA},
+        },
+        messages=[{"role": "user", "content": prompt}],
+        timeout=12.0,  # 60s war für ein interaktives Dashboard deutlich zu lang
+    )
+    return json.loads(response.choices[0].message.content)
 
 
 @app.post("/api/analyze-user", response_model=UserAnalyzeResponse)
@@ -133,9 +145,8 @@ async def analyze_user(body: UserAnalyzeRequest):
         f"- Registriert vor {body.days_since_registration} Tagen\n"
         f"- Letzter Login vor {body.days_since_last_login} Tagen\n"
         f"- {body.login_count} Logins insgesamt, {body.feature_clicks} Feature-Klicks\n\n"
-        "Antworte NUR mit JSON in exakt diesem Format, ohne Markdown-Codeblock:\n"
-        '{"summary": "Maximal 1-2 Sätze, sachlich, keine Wiederholung der Rohzahlen.", '
-        '"recommendation": "Eine konkrete, umsetzbare Handlung für den Admin, max. 1 Satz."}'
+        "summary: maximal 1-2 Sätze, sachlich, keine Wiederholung der Rohzahlen. "
+        "recommendation: eine konkrete, umsetzbare Handlung für den Admin, max. 1 Satz."
     )
 
     try:
@@ -146,7 +157,8 @@ async def analyze_user(body: UserAnalyzeRequest):
             recommendation=data.get("recommendation", "Keine Empfehlung verfügbar."),
             source="llm",
         )
-    except Exception:
+    except Exception as e:
+        logger.warning("LLM-Aufruf fehlgeschlagen, nutze regelbasierten Fallback-Text: %s", e)
         # Fallback: rein regelbasierte Texte statt Absturz oder langer Wartezeit
         fallback_texts = {
             "Active": (

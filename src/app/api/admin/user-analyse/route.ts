@@ -1,11 +1,12 @@
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { getAuthUser } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Anzahl paralleler Anfragen an das KI-Backend. Komplett sequentiell ist
-// langsam, komplett parallel kann Ollama/den Host überlasten – 4 ist ein
-// vernünftiger Mittelweg, gerne an deine Hardware anpassen.
+// langsam, komplett parallel riskiert Rate-Limits bei der Claude API – 4 ist
+// ein vernünftiger Mittelweg.
 const CONCURRENCY = 4;
 
 type User = typeof users.$inferSelect;
@@ -57,6 +58,10 @@ async function analysiereUser(user: User) {
       kiRecommendation: kiDaten.recommendation,
     };
   } catch (error) {
+    logger.error('KI-Analyse für Nutzer fehlgeschlagen', {
+      error,
+      userId: user.id,
+    });
     return {
       id: user.id,
       email: user.email,
@@ -70,7 +75,7 @@ async function analysiereUser(user: User) {
 }
 
 // Führt die Analysen in Gruppen von CONCURRENCY parallel aus –
-// statt komplett sequentiell (langsam) oder komplett parallel (überlastet Ollama).
+// statt komplett sequentiell (langsam) oder komplett parallel (riskiert Rate-Limits).
 async function analysiereInBatches(alleUser: User[]) {
   const ergebnisse: Awaited<ReturnType<typeof analysiereUser>>[] = [];
   for (let i = 0; i < alleUser.length; i += CONCURRENCY) {
@@ -91,7 +96,11 @@ export async function GET(request: NextRequest) {
     const alleUser = await db.select().from(users);
     const analysierteUser = await analysiereInBatches(alleUser);
     return NextResponse.json(analysierteUser);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    logger.error('Laden der Nutzeranalyse fehlgeschlagen', { error });
+    return NextResponse.json(
+      { error: 'Systemfehler beim Laden der Nutzeranalyse.' },
+      { status: 500 }
+    );
   }
 }
