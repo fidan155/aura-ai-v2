@@ -14,7 +14,7 @@ function getSecret(): Uint8Array {
   return cachedSecret;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -43,9 +43,10 @@ export async function middleware(request: NextRequest) {
 
     // Login/Register blockieren, wenn bereits eingeloggt
     if (pathname === '/login' || pathname === '/register') {
-      return NextResponse.redirect(new URL(role === 'admin' ? '/admin' : '/dashboard', request.url));
+      return NextResponse.redirect(
+        new URL(role === 'admin' ? '/admin' : '/dashboard', request.url)
+      );
     }
-
   } catch (error) {
     // Bei manipuliertem/abgelaufenem Token: Cookie löschen und zum Login
     const response = NextResponse.redirect(new URL('/login', request.url));

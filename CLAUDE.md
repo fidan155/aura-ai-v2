@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-- `src/middleware.ts` — edge middleware guarding `/admin` and `/dashboard`. Reads the `auth_token` JWT cookie (verified with `jose`/`JWT_SECRET`), redirects unauthenticated users to `/login`, redirects users to the route matching their `role` (`admin` → `/admin`, otherwise `/dashboard`), and blocks `/login`/`/register` for already-authenticated users.
+- `src/proxy.ts` — edge proxy (formerly `middleware.ts`) guarding `/admin` and `/dashboard`. Reads the `auth_token` JWT cookie (verified with `jose`/`JWT_SECRET`), redirects unauthenticated users to `/login`, redirects users to the route matching their `role` (`admin` → `/admin`, otherwise `/dashboard`), and blocks `/login`/`/register` for already-authenticated users.
 - `src/db/schema.ts` — Drizzle schema, three tables: `users` (includes engagement-tracking columns `lastLogin`, `loginCount`, `featureClicks`, plus `role`), `adressen` (1:1 with `users` via `userId` FK, cascade delete), `antraege` (standalone, no FK to `users`).
 - `src/db/index.ts` — `postgres-js` + Drizzle client, reads `DATABASE_URL`.
 - `src/app/api/*` route handlers:
